@@ -1,0 +1,39 @@
+:root {
+  --background-dark: #1e1e1e;
+  --nav-background-dark: #0a0a1a;
+
+  --text-primary-dark: #ffffff;
+  --text-secondary-dark: #a0aec0;
+  --text-link-dark: #ffffff;
+  --button-background-dark: #2563eb;
+  --button-text-dark: #ffffff;
+  --button-hover-dark: #1d4ed8;
+  --border-dark: #2d3748;
+
+  --font-inter: 'Inter', sans-serif;
+  --font-fira-code: 'Fira Code', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--background-dark);
+  color: var(--text-primary-dark);
+  overflow: hidden;
+   height: 100%;
+}
+
+html {
+    height: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
