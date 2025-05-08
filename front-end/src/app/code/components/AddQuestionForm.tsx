@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import styles from './AddQuestionForm.module.css';
+import styles from './addQuestionForm.module.css';
 
 interface QuestionFormData {
   id: string;
