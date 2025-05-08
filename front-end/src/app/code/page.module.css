@@ -57,38 +57,34 @@
   background-color: #ffffff;
 }
 
-/* New styles for the header containing dropdown and add button */
 .questionSelectionHeader {
   display: flex;
   align-items: center;
-  gap: 8px; /* Space between dropdown and button */
-  margin-bottom: 15px; /* Retains original dropdown margin */
-  flex-shrink: 0; /* Prevent this header from shrinking */
+  gap: 8px;
+  margin-bottom: 15px;
+  flex-shrink: 0;
 }
 
 .questionDropdown {
-  /* margin-bottom: 15px; /* Moved to questionSelectionHeader */
-  /* flex-shrink: 0; /* Moved to questionSelectionHeader */
-  flex-grow: 1; /* Dropdown takes available space */
-  min-width: 200px; /* Prevent dropdown from becoming too small */
+  flex-grow: 1;
+  min-width: 200px;
 }
 
-/* New '+' button style, themed like .runButton */
 .addQuestionButton {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px; /* Fixed width for the button */
-  height: 38px; /* Match react-select default height */
+  width: 38px;
+  height: 38px;
   background-color: var(--button-background-dark);
   color: var(--button-text-dark);
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 1.6rem; /* Larger '+' symbol */
-  font-weight: normal; /* Or 'bold' if preferred for '+' */
-  line-height: 1; /* Ensure tight line height for the symbol */
-  flex-shrink: 0; /* Prevent button from shrinking */
+  font-size: 1.6rem;
+  font-weight: normal;
+  line-height: 1;
+  flex-shrink: 0;
   transition: background-color 0.2s ease;
 }
 
@@ -102,22 +98,20 @@
   color: var(--text-secondary-dark, #777);
   border: 1px solid var(--border-dark);
   border-radius: 4px;
-  background-color: #f9f9f9; /* Or a theme variable like --background-base */
+  background-color: #f9f9f9;
   height: 38px;
   display: flex;
   align-items: center;
-  flex-grow: 1; /* Allow it to take space like the dropdown */
+  flex-grow: 1;
 }
 
-
-/* Styles for react-select component */
 .select__control {
   background-color: #ffffff !important;
   border-color: var(--border-dark) !important;
   color: var(--text-primary-dark) !important;
   box-shadow: none !important;
   border-radius: 4px !important;
-  min-height: 38px !important; /* Ensure consistent height */
+  min-height: 38px !important;
   height: 38px !important;
 }
 .select__control:hover {
@@ -127,13 +121,13 @@
    border-color: var(--button-background-dark) !important;
    box-shadow: 0 0 0 1px var(--button-background-dark) !important;
 }
-.select__value-container { /* Ensure vertical centering in react-select */
+.select__value-container {
     height: 36px !important;
     padding: 0 8px !important;
 }
 .select__single-value {
   color: var(--text-primary-dark) !important;
-  line-height: normal !important; /* Reset line-height for proper centering */
+  line-height: normal !important;
 }
 .select__input-container {
    color: var(--text-primary-dark) !important;
@@ -142,11 +136,11 @@
    padding: 0 !important;
 }
 .select__input {
-    height: auto !important; /* Allow input to size naturally */
+    height: auto !important;
 }
 .select__placeholder {
   color: var(--text-secondary-dark) !important;
-  line-height: normal !important; /* Reset line-height for proper centering */
+  line-height: normal !important;
 }
 .select__menu {
   background-color: #ffffff !important;
@@ -174,14 +168,14 @@
 }
 .select__dropdown-indicator {
   color: var(--text-secondary-dark) !important;
-  padding: 6px 8px !important; /* Adjust padding for indicator */
+  padding: 6px 8px !important;
 }
 .select__dropdown-indicator:hover {
   color: var(--text-primary-dark) !important;
 }
 .select__clear-indicator {
     color: var(--text-secondary-dark) !important;
-    padding: 6px 8px !important; /* Adjust padding for indicator */
+    padding: 6px 8px !important;
 }
 .select__clear-indicator:hover {
     color: var(--text-primary-dark) !important;
@@ -213,8 +207,7 @@
 
 .questionDetails {
   overflow-y: auto;
-  background-color: #f0f0f0; /* Matching panel background */
-  /* Removed padding from here if contentSection has its own */
+  background-color: #f0f0f0;
 }
 
 .separator {
@@ -224,12 +217,12 @@
 }
 
 .errorText {
-  color: #f48771; /* Consider var(--error-text-color) */
+  color: #f48771;
 }
 
 .interviewerSection {
   overflow-y: auto;
-  background-color: #f0f0f0; /* Matching panel background */
+  background-color: #f0f0f0;
   display: flex;
   flex-direction: column;
 }
@@ -263,11 +256,11 @@
 
 .activePanelTab {
   color: var(--text-primary-dark);
-  border-bottom-color: var(--button-background-dark); /* Or a specific accent color var(--accent-color) */
+  border-bottom-color: var(--button-background-dark);
 }
 
 .contentSection {
-  padding: 10px 0; /* Padding for content inside tabs */
+  padding: 10px 0;
 }
 
 .difficultyText {
@@ -287,7 +280,7 @@
 }
 
 .descriptionText a {
- color: var(--button-background-dark); /* Or var(--link-color) */
+ color: var(--button-background-dark);
  text-decoration: none;
 }
 .descriptionText a:hover {
@@ -305,7 +298,7 @@
 }
 
 .examplePre {
-  background-color: #e0e0e0 !important; /* Or var(--code-background-light) */
+  background-color: #e0e0e0 !important;
   padding: 10px;
   border-radius: 4px;
   border: 1px solid var(--border-dark);
@@ -317,12 +310,12 @@
 }
 
 .examplePre strong {
-    font-weight: 600; /* Or a specific var for strong in code */
+    font-weight: 600;
 }
 
 .exampleExplanation {
   margin-top: 5px;
-  padding-left: 5px; /* Or 0 if not needed */
+  padding-left: 5px;
   color: var(--text-secondary-dark);
   font-size: 0.95em;
 }
@@ -357,7 +350,7 @@
 }
 
 .constraintsList li code {
-  background-color: #e0e0e0; /* Or var(--code-background-light) */
+  background-color: #e0e0e0;
   padding: 2px 4px;
   border-radius: 3px;
   font-family: Consolas, 'Courier New', monospace;
@@ -365,18 +358,18 @@
 }
 
 .editorControls {
-  padding: 0 10px; /* Adjusted padding for height consistency */
-  background-color: #e0e0e0; /* Or var(--background-toolbar) */
+  padding: 0 10px;
+  background-color: #e0e0e0;
   border-bottom: 1px solid var(--border-dark);
   flex-shrink: 0;
-  height: 40px; /* Consistent height */
+  height: 40px;
   display: flex;
   align-items: center;
 }
 
 .runButton {
-  padding: 5px 15px; /* Keep specific padding for run button */
-  height: 30px; /* Ensure button content fits */
+  padding: 5px 15px;
+  height: 30px;
   background-color: var(--button-background-dark);
   color: var(--button-text-dark);
   border: none;
@@ -394,8 +387,8 @@
 }
 
 .runButton:disabled {
-  background-color: #cccccc; /* Or var(--button-disabled-background) */
-  color: #666666; /* Or var(--button-disabled-text) */
+  background-color: #cccccc;
+  color: #666666;
   cursor: not-allowed;
   opacity: 0.7;
 }
@@ -409,7 +402,7 @@
   height: 200px;
   flex-shrink: 0;
   overflow-y: auto;
-  background-color: #f0f0f0; /* Or var(--background-light) */
+  background-color: #f0f0f0;
   color: var(--text-primary-dark);
   border-top: 1px solid var(--border-dark);
   font-family: monospace;
@@ -439,7 +432,7 @@
 .resultCase {
   margin-bottom: 15px;
   padding-bottom: 10px;
-  border-bottom: 1px dashed #dddddd; /* Or var(--border-light-dashed) */
+  border-bottom: 1px dashed #dddddd;
 }
 .resultCase:last-child {
     border-bottom: none;
@@ -448,7 +441,7 @@
 .resultDetailsContainer {
   margin-top: 8px;
   padding: 10px;
-  background-color: #ffffff; /* Or var(--background-content-box) */
+  background-color: #ffffff;
   border: 1px solid var(--border-dark);
   border-radius: 4px;
   font-size: 0.95em;
@@ -480,7 +473,7 @@
   font-family: Consolas, 'Courier New', monospace;
   color: var(--text-primary-dark);
   word-break: break-all;
-  background-color: #e0e0e0; /* Or var(--code-background-light) */
+  background-color: #e0e0e0;
   padding: 2px 5px;
   border-radius: 3px;
   flex-grow: 1;
@@ -488,9 +481,9 @@
 
 .resultErrorValue {
    font-family: Consolas, 'Courier New', monospace;
-   color: #c53030; /* Or var(--error-text-strong) */
-   background-color: #fed7d7; /* Or var(--error-background-light) */
-   border: 1px solid #fbb6b6; /* Or var(--error-border-light) */
+   color: #c53030;
+   background-color: #fed7d7;
+   border: 1px solid #fbb6b6;
    padding: 8px;
    border-radius: 3px;
    white-space: pre-wrap;
@@ -500,25 +493,24 @@
 }
 
 .passResult {
-  color: #2f855a; /* Or var(--success-text-strong) */
+  color: #2f855a;
   font-weight: bold;
 }
 
 .failResult {
-  color: #c53030; /* Or var(--error-text-strong) */
+  color: #c53030;
   font-weight: bold;
 }
 
 .errorResult {
-  color: #c53030; /* Or var(--error-text-strong) */
-  background-color: #fed7d7; /* Or var(--error-background-light) */
+  color: #c53030;
+  background-color: #fed7d7;
   padding: 10px;
   border-radius: 4px;
-  border: 1px solid #fbb6b6; /* Or var(--error-border-light) */
+  border: 1px solid #fbb6b6;
   margin: 5px 0;
 }
 
-/* Scrollbar styles - these seem fine and are specific */
 .questionPanel::-webkit-scrollbar,
 .questionDetails::-webkit-scrollbar,
 .interviewerSection::-webkit-scrollbar {
@@ -529,45 +521,44 @@
 .questionPanel::-webkit-scrollbar-track,
 .questionDetails::-webkit-scrollbar-track,
 .interviewerSection::-webkit-scrollbar-track {
-  background: #e0e0e0; /* Or var(--scrollbar-track-color) */
+  background: #e0e0e0;
   border-radius: 4px;
 }
 
 .questionPanel::-webkit-scrollbar-thumb {
-  background-color: #cccccc; /* Or var(--scrollbar-thumb-color-light) */
+  background-color: #cccccc;
   border-radius: 4px;
-  border: 2px solid #e0e0e0; /* Or var(--scrollbar-track-color) */
+  border: 2px solid #e0e0e0;
 }
 .questionPanel::-webkit-scrollbar-thumb:hover {
-  background-color: #bbbbbb; /* Or var(--scrollbar-thumb-hover-color-light) */
+  background-color: #bbbbbb;
 }
 
 .questionDetails::-webkit-scrollbar-thumb,
 .interviewerSection::-webkit-scrollbar-thumb {
-  background-color: #b0b0b0; /* Or var(--scrollbar-thumb-color) */
+  background-color: #b0b0b0;
   border-radius: 4px;
-  border: 2px solid #e0e0e0; /* Or var(--scrollbar-track-color) */
+  border: 2px solid #e0e0e0;
 }
 .questionDetails::-webkit-scrollbar-thumb:hover,
 .interviewerSection::-webkit-scrollbar-thumb:hover {
-  background-color: #a0a0a0; /* Or var(--scrollbar-thumb-hover-color) */
+  background-color: #a0a0a0;
 }
 
 .questionPanel::-webkit-scrollbar-corner,
 .questionDetails::-webkit-scrollbar-corner,
 .interviewerSection::-webkit-scrollbar-corner {
-    background: #e0e0e0; /* Or var(--scrollbar-track-color) */
+    background: #e0e0e0;
 }
 
 .questionPanel,
 .questionDetails,
 .interviewerSection {
   scrollbar-width: thin;
-  /* scrollbar-color format: thumb-color track-color */
 }
-.questionPanel { scrollbar-color: #cccccc #e0e0e0; } /* Or var(--scrollbar-thumb-color-light) var(--scrollbar-track-color) */
-.questionDetails { scrollbar-color: #b0b0b0 #e0e0e0; } /* Or var(--scrollbar-thumb-color) var(--scrollbar-track-color) */
-.interviewerSection { scrollbar-color: #b0b0b0 #e0e0e0; } /* Or var(--scrollbar-thumb-color) var(--scrollbar-track-color) */
+.questionPanel { scrollbar-color: #cccccc #e0e0e0; }
+.questionDetails { scrollbar-color: #b0b0b0 #e0e0e0; }
+.interviewerSection { scrollbar-color: #b0b0b0 #e0e0e0; }
 
 
 .solutionsMainTitle {
@@ -607,7 +598,6 @@
   margin: .5em 0;
   overflow: auto;
   border-radius: 0.3em;
-  /* Theme for okaidia is applied by prismjs theme css */
 }
 
 .solutionCode code[class*="language-"] {
@@ -624,6 +614,6 @@
 
 .solutionSeparator {
   border: none;
-  border-top: 1px dashed var(--border-dark); /* Or var(--border-light-dashed) */
+  border-top: 1px dashed var(--border-dark);
   margin-top: 2rem;
 }

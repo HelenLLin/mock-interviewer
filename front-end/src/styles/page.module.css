@@ -1,26 +1,22 @@
-/* src/styles/page.module.css - Terminal styles reverted to original */
-
 .container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  color: var(--text-primary-dark); /* Will use the themed text color from globals.css */
-  /* The background is now handled by the body's mesh gradient */
+  color: var(--text-primary-dark);
   background-color: transparent;
-  position: relative; /* To ensure content stacks above body's pseudo-elements if any z-index issues */
-  z-index: 1; /* Content above background blobs */
+  position: relative;
+  z-index: 1;
 }
 
 .navbar {
   width: 100%;
   padding: 1rem 1.5rem;
-  /* Navbar background: could be transparent to show mesh, or a very subtle semi-transparent color, or themed */
-  background-color: rgba(244, 241, 233, 0.3); /* Example: very subtle, semi-transparent version of base, or var(--nav-background-dark) with alpha */
-  backdrop-filter: blur(5px); /* Optional: frosted glass effect for navbar */
-  border-bottom: 1px solid rgba(166, 157, 230, 0.2); /* Subtle border with one of your accent colors */
+  background-color: rgba(244, 241, 233, 0.3);
+  backdrop-filter: blur(5px);
+  border-bottom: 1px solid rgba(166, 157, 230, 0.2);
   flex-shrink: 0;
-  position: relative; /* Or sticky, etc. */
-  z-index: 2; /* Navbar above general container content if needed */
+  position: relative;
+  z-index: 2;
 }
 
 .navContent {
@@ -38,7 +34,7 @@
 }
 
 .logoLink {
-    color: var(--text-primary-dark); /* Themed */
+    color: var(--text-primary-dark);
     font-size: 1.5rem;
     text-decoration: none;
 }
@@ -50,13 +46,13 @@
 }
 
 .navLink {
-  color: var(--text-secondary-dark); /* Themed */
+  color: var(--text-secondary-dark);
   text-decoration: none;
   transition: color 0.2s ease-in-out;
   font-size: 0.875rem;
 }
 .navLink:hover {
-  color: var(--text-primary-dark); /* Themed */
+  color: var(--text-primary-dark);
 }
 
 .navActions {
@@ -69,15 +65,15 @@
   font-family: var(--font-fira-code);
   font-size: 0.875rem;
   font-weight: 500;
-  background-color: var(--button-background-dark); /* Themed */
-  color: var(--button-text-dark); /* Themed */
+  background-color: var(--button-background-dark);
+  color: var(--button-text-dark);
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   text-decoration: none;
   transition: background-color 0.2s ease-in-out;
 }
 .loginButton:hover {
-  background-color: var(--button-hover-dark); /* Themed */
+  background-color: var(--button-hover-dark);
 }
 
 .mainContent {
@@ -110,13 +106,12 @@
   padding-left: 1rem;
 }
 
-/* --- Terminal CSS - Reverted to Original --- */
 .terminalFrame {
   width: 100%;
   max-width: 600px;
-  background-color: #1e1e1e; /* Original */
+  background-color: #1e1e1e;
   border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); /* Original */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -124,12 +119,12 @@
 }
 
 .terminalHeader {
-  background-color: #333; /* Original */
+  background-color: #333;
   padding: 0.5rem 1rem;
   display: flex;
   align-items: center;
   position: relative;
-  border-bottom: 1px solid #444; /* Original */
+  border-bottom: 1px solid #444;
   flex-shrink: 0;
 }
 
@@ -148,12 +143,12 @@
   border-radius: 50%;
 }
 
-.red { background-color: #ff5f56; } /* Original */
-.yellow { background-color: #ffbd2e; } /* Original */
-.green { background-color: #27c93f; } /* Original */
+.red { background-color: #ff5f56; }
+.yellow { background-color: #ffbd2e; }
+.green { background-color: #27c93f; }
 
 .terminalTitle {
-  color: #ccc; /* Original */
+  color: #ccc;
   font-family: sans-serif;
   font-size: 0.8rem;
   text-align: center;
@@ -164,8 +159,8 @@
 .terminalBody {
   flex-grow: 1;
   padding: 1rem;
-  background-color: #000000; /* Original */
-  color: #D4D4D4; /* Original */
+  background-color: #000000;
+  color: #D4D4D4;
   font-family: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
   font-size: 0.9em;
   line-height: 1.6;
@@ -179,13 +174,12 @@
     white-space: pre-wrap !important;
     word-break: break-word !important;
 }
-/* --- End of Terminal CSS --- */
 
 .motto {
   font-family: var(--font-fira-code);
   font-weight: 700;
   font-size: 3.75rem;
-  color: var(--text-primary-dark); /* Themed */
+  color: var(--text-primary-dark);
   margin-bottom: 1.5rem;
   text-shadow: none;
   text-align: left;
@@ -195,7 +189,7 @@
 .subheadline {
   font-family: var(--font-inter);
   font-size: 1.125rem;
-  color: var(--text-secondary-dark); /* Themed */
+  color: var(--text-secondary-dark);
   margin-bottom: 2.5rem;
   max-width: 500px;
   text-align: left;
@@ -214,8 +208,8 @@
   font-family: var(--font-fira-code);
   font-size: 1rem;
   font-weight: 700;
-  background-color: var(--button-background-dark); /* Themed */
-  color: var(--button-text-dark); /* Themed */
+  background-color: var(--button-background-dark);
+  color: var(--button-text-dark);
   padding: 0.75rem 1.5rem;
   border-radius: 9999px;
   text-decoration: none;
@@ -224,7 +218,7 @@
   text-align: center;
 }
 .ctaButton:hover {
-  background-color: var(--button-hover-dark); /* Themed */
+  background-color: var(--button-hover-dark);
 }
 
 @media (max-width: 768px) {
@@ -250,7 +244,7 @@
       padding-left: 0;
   }
 
-  .terminalFrame { /* This will override the height: 400px for smaller screens */
+  .terminalFrame {
       height: 350px;
   }
 
@@ -274,62 +268,53 @@
   }
 }
 
-/* Add this to your globals.css or a relevant component's CSS */
-/* Apply this class to the body or your main page container */
 .mesh-gradient-background {
-  background-color: #FAF7F2; /* Base color - a very light cream/off-white */
+  background-color: #FAF7F2;
   position: relative;
-  overflow: hidden; /* Important to contain the large gradients */
-  min-height: 100vh; /* Ensure it covers the viewport */
+  overflow: hidden;
+  min-height: 100vh;
 }
 
 .mesh-gradient-background::before,
 .mesh-gradient-background::after,
-.mesh-gradient-background > div.gradient-shape { /* You can use pseudo-elements or dedicated divs */
+.mesh-gradient-background > div.gradient-shape {
   content: "";
   position: absolute;
-  border-radius: 50%; /* Makes them circular */
-  opacity: 0.5; /* Adjust for desired intensity */
-  mix-blend-mode: screen; /* Or 'multiply', 'overlay', 'soft-light' - experiment! */
-  filter: blur(80px); /* The main blur effect - adjust value */
-  z-index: 1; /* Below main content */
+  border-radius: 50%;
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  filter: blur(80px);
+  z-index: 1;
 }
 
-/* Example: A purple blob */
 .mesh-gradient-background::before {
-  width: 500px; /* Adjust size */
-  height: 500px; /* Adjust size */
-  background: radial-gradient(circle, #B8A6D5 0%, transparent 70%); /* Lavender to transparent */
-  top: -150px;  /* Adjust position */
-  left: -100px; /* Adjust position */
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #B8A6D5 0%, transparent 70%);
+  top: -150px;
+  left: -100px;
 }
 
-/* Example: A blue blob */
 .mesh-gradient-background::after {
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, #A0C3D8 0%, transparent 70%); /* Soft blue to transparent */
+  background: radial-gradient(circle, #A0C3D8 0%, transparent 70%);
   bottom: -200px;
   right: -150px;
   opacity: 0.6;
 }
 
-/* Example: A pink/orange blob (using a separate div for more control if needed) */
-/* In your HTML: <div class="mesh-gradient-background"> <div class="gradient-shape orange"></div> ...rest of content... </div> */
 .mesh-gradient-background > div.gradient-shape.orange {
   width: 450px;
   height: 450px;
-  background: radial-gradient(circle, #F5CEC7 0%, transparent 70%); /* Muted pink/orange */
+  background: radial-gradient(circle, #F5CEC7 0%, transparent 70%);
   top: 50%;
   left: 50%;
-  transform: translate(-70%, -30%); /* Adjust for positioning */
+  transform: translate(-70%, -30%);
   opacity: 0.4;
 }
 
-/* Your main content needs to be above these blurred shapes */
-.container { /* Your existing main container */
+.container {
   position: relative;
-  z-index: 2; /* Ensure content is above the gradient shapes */
-  /* Make its background transparent if the mesh is on the body or a parent wrapper */
-  /* background-color: transparent; */
+  z-index: 2;
 }

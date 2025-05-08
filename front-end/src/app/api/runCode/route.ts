@@ -9,7 +9,7 @@ async function connectToDb() {
   if (mongoose.connection.readyState >= 1) {
     return;
   }
-  await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/llminterviewer');
+  await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/llm-interviewer');
 }
 
 interface ITestCase {

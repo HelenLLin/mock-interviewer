@@ -144,13 +144,12 @@ const CodeEditor: React.FC = () => {
     } finally {
       setIsLoadingList(false);
     }
-  }, [selectedOption, questionOptions]); // questionOptions is still needed here for currentQuestionOptions to be correctly updated if fetchQuestionList is called multiple times by other effects or handlers. The primary fix for the loop is in the calling useEffect.
-
+  }, [selectedOption, questionOptions]);
 
   useEffect(() => {
     fetchQuestionList();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // This useEffect is intended to run only once on mount. fetchQuestionList will use initial state.
+  }, []);
 
   useEffect(() => {
     if (!selectedOption) {

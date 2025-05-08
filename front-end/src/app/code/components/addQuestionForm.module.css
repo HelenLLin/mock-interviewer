@@ -43,7 +43,7 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 15px; /* Spacing between form elements */
+  gap: 15px;
 }
 
 .label {

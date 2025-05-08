@@ -3,7 +3,6 @@
   flex-direction: column;
   gap: 1rem;
   padding: 1.5rem;
-  /* background-color: var(--background-content-box, #ffffff); */
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   margin: 1rem;
@@ -37,7 +36,6 @@
 .status_container {
   margin-top: 1rem;
   padding: 1rem;
-  /* background-color: var(--background-panel, #f9fafb); */
   border: 1px solid var(--border-dark);
   border-radius: 0.5rem;
   width: 100%;

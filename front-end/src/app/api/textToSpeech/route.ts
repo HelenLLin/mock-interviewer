@@ -4,7 +4,8 @@ export async function POST(req: NextRequest) {
   try {
     const { text } = await req.json();
 
-    const voiceId = 'EXAVITQu4vr4xnSDxMaL'; // default ElevenLabs voice
+    const voiceId = 'lcMyyd2HUfFzxdCaC4Ta';
+    // non british voice: EIsgvJT3rwoPvRFG6c4n
     const apiKey = process.env.ELEVENLABS_API_KEY;
 
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
