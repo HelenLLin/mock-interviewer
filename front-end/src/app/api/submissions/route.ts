@@ -2,6 +2,15 @@ import { NextResponse, NextRequest } from 'next/server';
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from 'uuid';
 
+interface S3Error extends Error {
+    code?: string;
+    requestId?: string;
+    extendedRequestId?: string;
+    cfId?: string;
+    name: string;
+}
+
+
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
   credentials: {
@@ -61,13 +70,11 @@ export async function POST(request: NextRequest) {
 
     console.log(`Attempting to upload submission to S3: ${S3_BUCKET_NAME}/${s3Key}`);
 
-    // Upload the file to S3
     const command = new PutObjectCommand(putObjectParams);
     await s3Client.send(command);
 
     console.log(`Successfully uploaded submission to S3: ${S3_BUCKET_NAME}/${s3Key}`);
 
-    // Respond with success and the S3 key or submission ID
     return NextResponse.json({
       success: true,
       message: 'Code submitted successfully.',
@@ -75,7 +82,8 @@ export async function POST(request: NextRequest) {
       s3Path: s3Key
     }, { status: 201 });
 
-  } catch (error: any) {
+  } catch (e: unknown) {
+    const error = e as S3Error;
     console.error("Error processing submission:", error);
     let errorMessage = 'Failed to submit code.';
     if (error.name === 'CredentialsProviderError') {

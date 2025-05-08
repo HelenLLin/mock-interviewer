@@ -1,25 +1,38 @@
+import type { Metadata } from 'next';
+import { Inter, Fira_Code } from 'next/font/google';
 import '../styles/globals.css';
 
-export const metadata = {
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+  weight: ['400', '500', '700'],
+});
+
+const firaCode = Fira_Code({
+  subsets: ['latin'],
+  variable: '--font-fira-code',
+  display: 'swap',
+  weight: ['400', '500', '700'],
+});
+
+export const metadata: Metadata = {
   title: 'Technical Interviewer',
   description: 'An app to help you practice your technical interviews.',
-}
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
-  <html lang="en">
-    <head>
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
-    </head>
-    <body>
-      {children}
-    </body>
-  </html>
-)
+    <html lang="en" className={`${inter.variable} ${firaCode.variable}`}>
+      <head>
+      </head>
+      <body>
+        {children}
+      </body>
+    </html>
+  );
 }

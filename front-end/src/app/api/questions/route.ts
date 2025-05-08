@@ -17,8 +17,19 @@ const defaultGenerationConfig = {
   // temperature: 1,
   // topK: 0,
   // topP: 0.95,
-  // maxOutputTokens: 2048 // Adjust as needed
+  // maxOutputTokens: 2048
 };
+
+interface Solution {
+  code: string;
+  summary?: string;
+}
+
+interface GeneralError extends Error {
+  code?: number;
+  errors?: unknown;
+  keyValue?: unknown;
+}
 
 if (!geminiApiKey) {
   console.warn("GEMINI_API_KEY environment variable is not set. Solution and summary generation will be skipped.");
@@ -63,9 +74,10 @@ export async function GET(request: NextRequest) {
                                       .lean();
       return NextResponse.json({ success: true, data: questions });
     }
-  } catch (error) {
-    console.error("API Error fetching questions:", error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown server error';
+  } catch (e: unknown) {
+    console.error("API Error fetching questions:", e);
+    const error = e as Error;
+    const errorMessage = error.message ? error.message : 'Unknown server error';
     return NextResponse.json({ success: false, error: 'Server error fetching data', details: errorMessage }, { status: 500 });
   }
 }
@@ -81,9 +93,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Missing required fields: title, description, or starting_code' }, { status: 400 });
     }
 
-    let generatedSolutions: any[] = [];
-    let generatedSolutionSummary: string | undefined = undefined;
-    let solutionTextForSummary: string | undefined = undefined;
+    const generatedSolutions: Solution[] = [];
+    let currentSolutionCode: string | undefined = undefined;
+    let currentSolutionSummary: string | undefined = undefined;
+
 
     if (geminiApiKey) {
       const genAI = new GoogleGenerativeAI(geminiApiKey);
@@ -93,7 +106,6 @@ export async function POST(request: NextRequest) {
           generationConfig: defaultGenerationConfig,
       });
 
-      // Generate Solution
       try {
         const solutionPrompt = `
           You are a coding assistant. Generate a concise and correct solution for the following coding question.
@@ -110,12 +122,10 @@ export async function POST(request: NextRequest) {
         console.log("Sending solution generation prompt to Gemini for title:", title);
         const solutionResult = await model.generateContent(solutionPrompt);
         const solutionResponse = solutionResult.response;
-        const currentSolutionText = solutionResponse.text();
+        currentSolutionCode = solutionResponse.text();
 
-        if (currentSolutionText) {
+        if (currentSolutionCode) {
           console.log("Received solution from Gemini for title:", title);
-          generatedSolutions.push({ code: currentSolutionText });
-          solutionTextForSummary = currentSolutionText;
         } else {
           console.warn("Gemini returned an empty solution for title:", title);
           const finishReason = solutionResponse.candidates?.[0]?.finishReason;
@@ -125,11 +135,12 @@ export async function POST(request: NextRequest) {
              console.warn(`Solution generation for title '${title}' finished unexpectedly: ${finishReason}`);
           }
         }
-      } catch (solutionError: any) {
+      } catch (e: unknown) {
+        const solutionError = e as Error;
         console.error(`Error generating solution with Gemini for title '${title}':`, solutionError.message);
       }
 
-      if (solutionTextForSummary) {
+      if (currentSolutionCode) {
         try {
           const summaryPrompt = `
             Provide a concise one or two-sentence summary for the following coding solution.
@@ -137,7 +148,7 @@ export async function POST(request: NextRequest) {
 
             Coding Solution:
             \`\`\`
-            ${solutionTextForSummary}
+            ${currentSolutionCode}
             \`\`\`
 
             Summary of the solution:
@@ -145,9 +156,9 @@ export async function POST(request: NextRequest) {
           console.log("Sending solution summary generation prompt to Gemini for title:", title);
           const summaryResult = await model.generateContent(summaryPrompt);
           const summaryResponse = summaryResult.response;
-          generatedSolutionSummary = summaryResponse.text();
+          currentSolutionSummary = summaryResponse.text();
 
-          if (generatedSolutionSummary) {
+          if (currentSolutionSummary) {
             console.log("Received solution summary from Gemini for title:", title);
           } else {
             console.warn("Gemini returned an empty solution summary for title:", title);
@@ -158,11 +169,19 @@ export async function POST(request: NextRequest) {
                console.warn(`Solution summary generation for title '${title}' finished unexpectedly: ${finishReason}`);
             }
           }
-        } catch (summaryError: any) {
+        } catch (e: unknown) {
+          const summaryError = e as Error;
           console.error(`Error generating solution summary with Gemini for title '${title}':`, summaryError.message);
         }
       } else {
         console.warn("Skipping solution summary generation as no solution was generated for title:", title);
+      }
+
+      if (currentSolutionCode) {
+        generatedSolutions.push({
+          code: currentSolutionCode,
+          summary: currentSolutionSummary
+        });
       }
 
     } else {
@@ -172,7 +191,6 @@ export async function POST(request: NextRequest) {
     const lastQuestion = await Question.findOne().sort({ id: -1 });
     const nextId = lastQuestion && typeof lastQuestion.id === 'number' ? lastQuestion.id + 1 : 1;
 
-    // Ensure you have a field like 'solutionSummary' in your IQuestion interface and Mongoose schema
     const newQuestionData: Partial<IQuestion> = {
       id: nextId,
       title,
@@ -183,7 +201,6 @@ export async function POST(request: NextRequest) {
       constraints: constraints || [],
       test_cases: test_cases || [],
       solutions: generatedSolutions.length > 0 ? generatedSolutions : undefined,
-      summary: generatedSolutionSummary, // Assuming 'summary' field is for solution summary
     };
 
     const question = new Question(newQuestionData);
@@ -191,14 +208,17 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: question }, { status: 201 });
 
-  } catch (error: any) {
+  } catch (e: unknown) {
+    const error = e as GeneralError;
     console.error("API Error creating question:", error);
+
     if (error.name === 'ValidationError') {
       return NextResponse.json({ success: false, error: 'Validation Error', details: error.errors }, { status: 400 });
     }
     if (error.code === 11000) {
        return NextResponse.json({ success: false, error: 'Duplicate key error. A question with this title or ID might already exist.', details: error.keyValue }, { status: 409 });
     }
-    return NextResponse.json({ success: false, error: 'Server error creating question', details: error.message }, { status: 500 });
+    const message = error.message || 'Server error creating question';
+    return NextResponse.json({ success: false, error: message, details: error.message }, { status: 500 });
   }
 }

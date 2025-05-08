@@ -16,11 +16,12 @@ const TextToSpeech: React.FC<TextToSpeechProps> = ({ text }) => {
 
   useEffect(() => {
     let cancelled = false
+    const currentAudioRef = audioRef.current;
 
     if (!text) {
       if (audioUrl) URL.revokeObjectURL(audioUrl)
       setAudioUrl(null)
-      if (audioRef.current) audioRef.current.src = ''
+      if (currentAudioRef) currentAudioRef.src = ''
       setGeneratedForText(null)
       setTtsError(null)
       setIsLoading(false)
@@ -28,21 +29,21 @@ const TextToSpeech: React.FC<TextToSpeechProps> = ({ text }) => {
     }
 
     if (text === generatedForText && audioUrl) {
-      if (audioRef.current && !audioRef.current.src) {
-        audioRef.current.src = audioUrl
+      if (currentAudioRef && !currentAudioRef.src) {
+        currentAudioRef.src = audioUrl
       }
       setIsLoading(false)
       return
     }
-    
+
     if (audioUrl) {
         URL.revokeObjectURL(audioUrl)
     }
-    if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.src = ''
+    if (currentAudioRef) {
+        currentAudioRef.pause()
+        currentAudioRef.src = ''
     }
-    
+
     setAudioUrl(null)
     setGeneratedForText(null)
     setTtsError(null)
@@ -70,8 +71,8 @@ const TextToSpeech: React.FC<TextToSpeechProps> = ({ text }) => {
         const newAudioUrl = URL.createObjectURL(audioBlob)
         setAudioUrl(newAudioUrl)
         setGeneratedForText(text)
-        if (audioRef.current) {
-          audioRef.current.src = newAudioUrl
+        if (currentAudioRef) {
+          currentAudioRef.src = newAudioUrl
         }
       } catch (err) {
         console.error('TTS fetch error:', err)
@@ -91,17 +92,18 @@ const TextToSpeech: React.FC<TextToSpeechProps> = ({ text }) => {
 
     return () => {
       cancelled = true
-      if (audioRef.current) {
-        audioRef.current.pause()
+      if (currentAudioRef) {
+        currentAudioRef.pause()
       }
       setIsLoading(false);
     }
-  }, [text])
+  }, [text, audioUrl, generatedForText])
 
   useEffect(() => {
+    const currentAudioUrl = audioUrl;
     return () => {
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl)
+      if (currentAudioUrl) {
+        URL.revokeObjectURL(currentAudioUrl)
       }
     }
   }, [audioUrl])
@@ -114,7 +116,7 @@ const TextToSpeech: React.FC<TextToSpeechProps> = ({ text }) => {
         setTtsError("Could not play audio. Try again.")
       })
     }
-  }, [isLoading, ttsError, audioUrl])
+  }, [isLoading, ttsError])
 
   return (
     <div className={styles.container}>

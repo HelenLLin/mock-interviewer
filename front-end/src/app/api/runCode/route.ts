@@ -1,37 +1,37 @@
-// src/app/api/runCode/route.ts
-import { NextResponse } from 'next/server';
-import { spawn } from 'child_process';
+import { NextResponse, NextRequest } from 'next/server';
+import { spawn, ChildProcess } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import mongoose from 'mongoose';
+import mongoose, { Document, Schema, Model, Types } from 'mongoose';
 
 async function connectToDb() {
   if (mongoose.connection.readyState >= 1) {
     return;
   }
-  await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/your_db_name');
+  await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/llminterviewer');
 }
 
 interface ITestCase {
-    input: any;
-    expected_output: any;
+    input: unknown;
+    expected_output: unknown;
 }
 
-interface IQuestion extends mongoose.Document {
-    _id: mongoose.Types.ObjectId;
+interface IQuestion extends Document {
+    _id: Types.ObjectId;
     title: string;
     test_cases?: ITestCase[];
 }
 
-const QuestionSchema = new mongoose.Schema<IQuestion>({
+const QuestionSchema = new Schema<IQuestion>({
     title: String,
     test_cases: [{
-        input: mongoose.Schema.Types.Mixed,
-        expected_output: mongoose.Schema.Types.Mixed
+        input: Schema.Types.Mixed,
+        expected_output: Schema.Types.Mixed
     }]
 });
-const Question = mongoose.models.Question || mongoose.model<IQuestion>('Question', QuestionSchema);
+
+const Question: Model<IQuestion> = mongoose.models.Question || mongoose.model<IQuestion>('Question', QuestionSchema);
 
 
 interface ExecutionResult {
@@ -41,12 +41,12 @@ interface ExecutionResult {
     error?: string;
 }
 
-const runPythonCode = (code: string, input: any, timeoutMs: number = 5000): Promise<ExecutionResult> => {
+const runPythonCode = (code: string, input: unknown, timeoutMs: number = 5000): Promise<ExecutionResult> => {
     return new Promise(async (resolve) => {
         let stdout = '';
         let stderr = '';
         let tempFilePath: string | null = null;
-        let pythonProcess: ReturnType<typeof spawn> | null = null;
+        let pythonProcess: ChildProcess | null = null;
         let processTimeout: NodeJS.Timeout | null = null;
         let resolved = false;
 
@@ -117,6 +117,11 @@ except Exception as e:
 
             pythonProcess = spawn('python3', [tempFilePath], { stdio: ['pipe', 'pipe', 'pipe'] });
 
+            if (!pythonProcess) {
+                cleanupAndResolve({ stdout, stderr, exitCode: null, error: 'Failed to spawn Python process.' });
+                return;
+            }
+
             processTimeout = setTimeout(() => {
                 if (!pythonProcess || pythonProcess.killed) return;
                 console.warn(`[Timeout] Process timed out after ${timeoutMs}ms. Killing ${tempFilePath}`);
@@ -124,13 +129,22 @@ except Exception as e:
                 cleanupAndResolve({ stdout, stderr, exitCode: null, error: `Execution timed out after ${timeoutMs}ms` });
             }, timeoutMs);
 
-            pythonProcess.stdout.on('data', (data) => {
-                stdout += data.toString();
-            });
+            if (pythonProcess.stdout) {
+                pythonProcess.stdout.on('data', (data) => {
+                    stdout += data.toString();
+                });
+            } else {
+                 console.warn(`[Warning] pythonProcess.stdout is null for ${tempFilePath}. Cannot listen for stdout data.`);
+            }
 
-            pythonProcess.stderr.on('data', (data) => {
-                stderr += data.toString();
-            });
+            if (pythonProcess.stderr) {
+                pythonProcess.stderr.on('data', (data) => {
+                    stderr += data.toString();
+                });
+            } else {
+                console.warn(`[Warning] pythonProcess.stderr is null for ${tempFilePath}. Cannot listen for stderr data.`);
+            }
+
 
             pythonProcess.on('error', (err) => {
                  console.error(`[Error] Failed to start subprocess for ${tempFilePath}.`, err);
@@ -143,15 +157,21 @@ except Exception as e:
 
             try {
                  const inputString = JSON.stringify(input) + '\n';
-                 pythonProcess.stdin.write(inputString);
-                 pythonProcess.stdin.end();
-             } catch (e: any) {
-                 console.error(`[Error] Error writing input to stdin for ${tempFilePath}:`, e);
+                 if (pythonProcess.stdin) {
+                    pythonProcess.stdin.write(inputString);
+                    pythonProcess.stdin.end();
+                 } else {
+                    throw new Error('Python process stdin is not available.');
+                 }
+             } catch (e: unknown) {
+                 const err = e as Error;
+                 console.error(`[Error] Error writing input to stdin for ${tempFilePath}:`, err);
                  if (pythonProcess && !pythonProcess.killed) pythonProcess.kill('SIGKILL');
-                 cleanupAndResolve({ stdout, stderr, exitCode: null, error: 'Failed to write input to Python script.' });
+                 cleanupAndResolve({ stdout, stderr, exitCode: null, error: `Failed to write input to Python script: ${err.message}` });
              }
 
-        } catch (error: any) {
+        } catch (e: unknown) {
+            const error = e as Error;
             console.error("[Error] Error during Python execution setup:", error);
             cleanupAndResolve({ stdout: '', stderr: '', exitCode: null, error: `Setup error: ${error.message}` });
         }
@@ -159,7 +179,7 @@ except Exception as e:
 };
 
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
         const { code, questionId } = body;
@@ -196,7 +216,7 @@ export async function POST(request: Request) {
              const { stdout, stderr, exitCode, error: executionError, testCase } = result;
 
              let status: 'Passed' | 'Failed' | 'Error' = 'Error';
-             let actualOutput = null;
+             let actualOutput: unknown = null;
              let errorMessage = executionError;
 
              const inputString = JSON.stringify(testCase.input);
@@ -212,7 +232,7 @@ export async function POST(request: Request) {
                      } else {
                          status = 'Failed';
                      }
-                 } catch (parseError) {
+                 } catch {
                      actualOutput = stdout.trim();
                      if (actualOutput === expectedOutputString) {
                          status = 'Passed';
@@ -250,7 +270,8 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true, results });
 
-    } catch (error: any) {
+    } catch (e: unknown) {
+        const error = e as Error;
         console.error("API Error in /api/runCode:", error);
         return NextResponse.json({ success: false, error: `Internal Server Error: ${error.message}` }, { status: 500 });
     }

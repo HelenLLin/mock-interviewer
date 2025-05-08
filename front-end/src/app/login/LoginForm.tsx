@@ -41,7 +41,7 @@ export default function LoginForm({ initialMode = 'login' }: LoginFormProps) {
     const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
     const successMessage = isLoginMode ? 'Login successful! Redirecting...' : 'Account created successfully! Please log in.';
 
-    let requestBody = { username, password };
+    const requestBody = { username, password };
 
     try {
       const response = await fetch(endpoint, {
@@ -70,7 +70,8 @@ export default function LoginForm({ initialMode = 'login' }: LoginFormProps) {
           setMessage('Account created successfully! Please sign in.');
         }
       }
-    } catch (error: any) {
+    } catch (e: unknown) {
+      const error = e as Error;
       setMessage(error.message || 'An error occurred.');
     } finally {
       setIsLoading(false);

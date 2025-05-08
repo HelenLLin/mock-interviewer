@@ -19,8 +19,8 @@ const DynamicSelect = dynamic<SelectProps>(() => import('react-select'), {
 });
 
 interface TestCase {
-  input: any;
-  expected_output: any;
+  input: unknown;
+  expected_output: unknown;
 }
 
 interface Solution {
@@ -30,13 +30,20 @@ interface Solution {
   title?: string;
 }
 
+interface Example {
+  input: unknown;
+  output: unknown;
+  explanation?: string;
+  [key: string]: unknown;
+}
+
 interface QuestionData {
   _id: string;
   id: number;
   title:string;
   description: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
-  examples: Record<string, any>[];
+  examples: Example[];
   constraints?: string[];
   starting_code: string;
   solutions?: Solution[];
@@ -89,7 +96,7 @@ const CodeEditor: React.FC = () => {
   const [isLoadingList, setIsLoadingList] = useState<boolean>(true);
   const [isLoadingQuestion, setIsLoadingQuestion] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [panelWidth, setPanelWidth] = useState(300); 
+  const [panelWidth, setPanelWidth] = useState(300);
   const [isDraggingPanelResizer, setIsDraggingPanelResizer] = useState(false);
   const [questionDetailsFlexBasis, setQuestionDetailsFlexBasis] = useState('60%');
   const [isDraggingHorizontalResizer, setIsDraggingHorizontalResizer] = useState(false);
@@ -107,24 +114,26 @@ const CodeEditor: React.FC = () => {
   const fetchQuestionList = useCallback(async (selectNewest?: boolean) => {
     setIsLoadingList(true);
     setError(null);
+    const currentQuestionOptions = questionOptions; 
     try {
       const response = await fetch('/api/questions?list=true');
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const result = await response.json();
       if (result.success && Array.isArray(result.data)) {
-        const options = result.data.map((q: { _id: string; title: string }) => ({ value: q._id, label: q.title }));
+        const options: QuestionOption[] = result.data.map((q: { _id: string; title: string }) => ({ value: q._id, label: q.title }));
         setQuestionOptions(options);
+
         if (selectNewest && options.length > 0) {
-            const newOption = options.find(opt => !questionOptions.some(oldOpt => oldOpt.value === opt.value)) || options[options.length - 1];
+            const newOption = options.find((opt: QuestionOption) => !currentQuestionOptions.some(oldOpt => oldOpt.value === opt.value)) || options[options.length - 1];
             if (newOption) setSelectedOption(newOption);
         } else if (!selectedOption && options.length > 0) {
-          const defaultOption = options.find((opt) => opt.label === 'Two Sum');
+          const defaultOption = options.find((opt: QuestionOption) => opt.label === 'Two Sum');
           if (defaultOption) setSelectedOption(defaultOption);
           else setSelectedOption(options[0]);
         } else if (options.length === 0) {
           setError("No questions found.");
           setSelectedOption(null);
-        } else if (selectedOption && !options.find(opt => opt.value === selectedOption.value)) {
+        } else if (selectedOption && !options.find((opt: QuestionOption) => opt.value === selectedOption.value)) {
            setSelectedOption(options.length > 0 ? options[0] : null);
         }
       } else {
@@ -135,11 +144,13 @@ const CodeEditor: React.FC = () => {
     } finally {
       setIsLoadingList(false);
     }
-  }, [selectedOption, questionOptions]);
+  }, [selectedOption, questionOptions]); // questionOptions is still needed here for currentQuestionOptions to be correctly updated if fetchQuestionList is called multiple times by other effects or handlers. The primary fix for the loop is in the calling useEffect.
+
 
   useEffect(() => {
     fetchQuestionList();
-  }, []); 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // This useEffect is intended to run only once on mount. fetchQuestionList will use initial state.
 
   useEffect(() => {
     if (!selectedOption) {
@@ -230,8 +241,8 @@ const CodeEditor: React.FC = () => {
    useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDraggingPanelResizer) {
-        const newWidth = Math.max(200, e.clientX); 
-        const maxWidth = window.innerWidth * 0.7; 
+        const newWidth = Math.max(200, e.clientX);
+        const maxWidth = window.innerWidth * 0.7;
         setPanelWidth(Math.min(newWidth, maxWidth));
       }
     };
@@ -252,7 +263,7 @@ const CodeEditor: React.FC = () => {
       const panelRect = questionPanelRef.current.getBoundingClientRect();
       const newHeight = e.clientY - panelRect.top;
       const totalHeight = panelRect.height;
-      const minPixelHeight = 100; 
+      const minPixelHeight = 100;
       const maxPixelHeight = totalHeight - 100;
       const clampedHeight = Math.max(minPixelHeight, Math.min(newHeight, maxPixelHeight));
       setQuestionDetailsFlexBasis(`${clampedHeight}px`);
@@ -289,8 +300,8 @@ const CodeEditor: React.FC = () => {
                    <div key={index} className={styles.exampleBlock}>
                       <div className={styles.exampleTitle}>Example {index + 1}:</div>
                       <pre className={styles.examplePre}>
-                        <strong>Input:</strong> {typeof ex.input === 'object' ? JSON.stringify(ex.input) : ex.input}{'\n'}
-                        <strong>Output:</strong> {typeof ex.output === 'object' ? JSON.stringify(ex.output) : ex.output}
+                        <strong>Input:</strong> {typeof ex.input === 'object' ? JSON.stringify(ex.input) : String(ex.input)}{'\n'}
+                        <strong>Output:</strong> {typeof ex.output === 'object' ? JSON.stringify(ex.output) : String(ex.output)}
                       </pre>
                       {ex.explanation && <p className={styles.exampleExplanation}><strong>Explanation:</strong> {ex.explanation}</p>}
                    </div>
@@ -335,7 +346,7 @@ const CodeEditor: React.FC = () => {
     const allPassed = runResults.every(r => r.status === 'Passed');
     const formatDisplayValue = (val: string | null | undefined): string => {
       if (val === null || val === undefined) return 'N/A';
-      try { return JSON.stringify(JSON.parse(val)); } catch (e) { return val; }
+      try { return JSON.stringify(JSON.parse(val)); } catch { return val; }
     };
     return (
       <div className={styles.resultsPanel}>

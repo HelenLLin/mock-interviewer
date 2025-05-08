@@ -11,7 +11,6 @@ interface QuestionFormData {
   examples: string;
   constraints: string[];
   starting_code: string;
-  // solutions: string; // Assuming solutions are handled differently or added later
   test_cases: string;
 }
 
@@ -29,7 +28,6 @@ const AddQuestionForm: React.FC<AddQuestionFormProps> = ({ onQuestionAdded, onCl
     examples: '[]',
     constraints: [],
     starting_code: '',
-    // solutions: '[]',
     test_cases: '[]',
   });
   const [currentConstraint, setCurrentConstraint] = useState('');
@@ -63,7 +61,6 @@ const AddQuestionForm: React.FC<AddQuestionFormProps> = ({ onQuestionAdded, onCl
     setError(null);
     setSuccessMessage(null);
 
-    // Updated validation: Difficulty is no longer required here
     if (!formData.title || !formData.description || !formData.starting_code) {
       setError('Please fill in all required fields: Title, Description, and Starting Code.');
       return;
@@ -73,8 +70,9 @@ const AddQuestionForm: React.FC<AddQuestionFormProps> = ({ onQuestionAdded, onCl
     try {
       parsedExamples = JSON.parse(formData.examples);
       if (!Array.isArray(parsedExamples)) throw new Error('Examples must be a JSON array.');
-    } catch (err) {
-      setError('Invalid JSON for Examples. Use array format: [{"input": "value", "output": "value"}].');
+    } catch (parseError: unknown) {
+      const message = parseError instanceof Error ? parseError.message : 'Invalid JSON format.';
+      setError(`Invalid JSON for Examples. Use array format: [{"input": "value", "output": "value"}]. Details: ${message}`);
       return;
     }
 
@@ -82,8 +80,9 @@ const AddQuestionForm: React.FC<AddQuestionFormProps> = ({ onQuestionAdded, onCl
     try {
       parsedTestCases = JSON.parse(formData.test_cases);
       if (!Array.isArray(parsedTestCases)) throw new Error('Test Cases must be a JSON array.');
-    } catch (err) {
-      setError('Invalid JSON for Test Cases. Use array format: [{"input": "value", "expected_output": "value"}].');
+    } catch (parseError: unknown) {
+      const message = parseError instanceof Error ? parseError.message : 'Invalid JSON format.';
+      setError(`Invalid JSON for Test Cases. Use array format: [{"input": "value", "expected_output": "value"}]. Details: ${message}`);
       return;
     }
 
@@ -118,8 +117,9 @@ const AddQuestionForm: React.FC<AddQuestionFormProps> = ({ onQuestionAdded, onCl
       } else {
         setError(result.error || 'Failed to add question.');
       }
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
+    } catch (fetchError: unknown) {
+      const message = fetchError instanceof Error ? fetchError.message : 'An unexpected error occurred.';
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -133,13 +133,6 @@ const AddQuestionForm: React.FC<AddQuestionFormProps> = ({ onQuestionAdded, onCl
         {error && <p className={styles.errorMessage}>{error}</p>}
         {successMessage && <p className={styles.successMessage}>{successMessage}</p>}
         <form onSubmit={handleSubmit} className={styles.form}>
-          {/* id field - uncomment if needed, though typically auto-generated */}
-          {/* <label className={styles.label}>
-            ID: <span className={styles.requiredStar}>*</span>
-            <input type="text" name="id" value={formData.id} onChange={handleInputChange} required className={styles.input} />
-          </label> */}
-
-          {/* Required Fields First */}
           <label className={styles.label}>
             Title:<span className={styles.requiredStar}>*</span>
             <input type="text" name="title" value={formData.title} onChange={handleInputChange} required className={styles.input} />
@@ -152,10 +145,8 @@ const AddQuestionForm: React.FC<AddQuestionFormProps> = ({ onQuestionAdded, onCl
             Starting Code:<span className={styles.requiredStar}>*</span>
             <textarea name="starting_code" value={formData.starting_code} onChange={handleInputChange} rows={4} required className={styles.textarea}></textarea>
           </label>
-
-          {/* Optional Fields, following IQuestion order */}
           <label className={styles.label}>
-            Difficulty: {/* No asterisk, not required */}
+            Difficulty:
             <select name="difficulty" value={formData.difficulty} onChange={handleInputChange} className={styles.select}>
                 <option value="">Select Difficulty (Optional)</option>
                 <option value="Easy">Easy</option>
@@ -181,15 +172,10 @@ const AddQuestionForm: React.FC<AddQuestionFormProps> = ({ onQuestionAdded, onCl
               ))}
             </ul>
           </div>
-          {/* <label className={styles.label}>
-            Solutions (JSON array):
-            <textarea name="solutions" value={formData.solutions} onChange={handleInputChange} rows={3} className={styles.textarea} placeholder='[{"code": "solution code", "language": "javascript"}]'/>
-          </label> */}
           <label className={styles.label}>
             Test Cases (JSON array):
             <textarea name="test_cases" value={formData.test_cases} onChange={handleInputChange} rows={3} className={styles.textarea} placeholder='[{"input": "value", "expected_output": "value"}]'/>
           </label>
-
           <button type="submit" disabled={isSubmitting} className={styles.submitButton}>
             {isSubmitting ? 'Submitting...' : 'Add Question'}
           </button>
