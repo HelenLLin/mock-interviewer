@@ -17,7 +17,7 @@ const generationConfig = {
   // temperature: 1,
   // topK: 0,
   // topP: 0.95,
-  // maxOutputTokens: 8192,
+  // maxOutputTokens: 2048
 };
 
 const MODEL_NAME = "gemini-1.5-flash-latest";
@@ -42,17 +42,9 @@ export async function POST(req: Request) {
     }
 
     const finalPrompt = `
-      You are a helpful interviewer assistant providing guidance on a coding problem.
-
-      **Instructions:**
-      * Keep your responses concise and focused, ideally 1-3 sentences.
-      * Only provide longer, more detailed explanations if the user's message explicitly asks for details, requires a step-by-step explanation, or presents a complex question/code snippet that necessitates a thorough answer.
-      * Focus on being helpful and guiding the user.
-
-      **User's message:**
-      ---
       ${originalClientPrompt}
-      ---
+      
+      Keep your response concise.
     `;
 
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -62,7 +54,7 @@ export async function POST(req: Request) {
         generationConfig,
     });
 
-    console.log("Sending final prompt to Gemini:", finalPrompt.substring(0, 200) + "...");
+    console.log("Sending final prompt to Gemini:", finalPrompt.substring(0, 100) + "...");
     const result = await model.generateContent(finalPrompt);
 
     const response = result.response;
@@ -91,12 +83,12 @@ export async function POST(req: Request) {
         errorMessage = error.message;
     }
 
-    // @ts-ignore
+    // @ts-expect-error expect error for safety
      if (error?.response?.promptFeedback?.blockReason) {
-      // @ts-ignore
+      // @ts-expect-error expect error for safety
       errorMessage = `Request blocked due to safety settings: ${error.response.promptFeedback.blockReason}`;
       statusCode = 400;
-      // @ts-ignore
+      // @ts-expect-error expect error for safety
       console.error("Safety block details:", error.response.promptFeedback);
     }
 

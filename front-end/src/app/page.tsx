@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import styles from '../styles/page.module.css';
+import BlobBackgroundLayout from '../components/BlobBackgroundLayout';
 
 const solutions = [`        for i in range(len(nums)):
             for j in range(i + 1, len(nums)):
@@ -25,7 +26,7 @@ const solutions = [`        for i in range(len(nums)):
 export default function LandingPage() {
 
   const staticCodeHeader = `class Solution:
-    def twoSum(self, nums: List[int], target: int) -> List[int]:`;
+    def twoSum(self, nums: List[int], target: int) -> List[int]:`; // Removed stray backslash
 
   const [currentSolutionIndex, setCurrentSolutionIndex] = useState(0);
   const [typedCodeBody, setTypedCodeBody] = useState('');
@@ -77,83 +78,74 @@ export default function LandingPage() {
   }, [animationPhase, currentIndex, typedCodeBody.length, currentSolutionIndex]);
 
   return (
-    <div className={styles.container}>
-      <nav className={styles.navbar}>
-        <div className={styles.navContent}>
-          <div className={styles.logoContainer}>
-             <Link href="/" className={styles.logoLink}>
-               LeetCoder
-             </Link>
-          </div>
-          <div className={styles.navLinks}>
-             <Link href="/features" className={styles.navLink}>
-               Features
-             </Link>
-             <Link href="/pricing" className={styles.navLink}>
-               Pricing
-             </Link>
-             <Link href="/about" className={styles.navLink}>
-               About
-             </Link>
-          </div>
-          <div className={styles.navActions}>
-            <Link href="/login" className={styles.loginButton}>
-              Login
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      <main className={styles.mainContent}>
-        <div className={styles.mainText}>
-          <h1 className={styles.motto}>
-            A Better Way to Learn
-          </h1>
-          <p className={styles.subheadline}>
-            Learn and prepare for technical interviews.
-          </p>
-          <div className={styles.ctaContainer}>
-            <Link href="/code" className={styles.ctaButton}>
-              Get Started
-            </Link>
-          </div>
-        </div>
-
-        <div className={styles.terminalContainer}>
-           <div className={styles.terminalFrame}>
-              <div className={styles.terminalHeader}>
-                <div className={styles.terminalDots}>
-                  <span className={`${styles.dot} ${styles.red}`}></span>
-                  <span className={`${styles.dot} ${styles.yellow}`}></span>
-                  <span className={`${styles.dot} ${styles.green}`}></span>
-                </div>
-                <div className={styles.terminalTitle}>code</div>
-              </div>
-
-              <div className={styles.terminalBody}>
-                  <SyntaxHighlighter
-                    language="python"
-                    style={vscDarkPlus}
-                    customStyle={{ background: 'transparent', margin: 0, padding: 0, fontSize: 'inherit', fontFamily: 'inherit' }}
-                    wrapLines={true}
-                    lineProps={{ style: { wordBreak: 'break-all', whiteSpace: 'pre-wrap' } }}
-                  >
-                    {staticCodeHeader}
-                  </SyntaxHighlighter>
-
-                  <SyntaxHighlighter
-                    language="python"
-                    style={vscDarkPlus}
-                    customStyle={{ background: 'transparent', margin: 0, padding: 0, fontSize: 'inherit', fontFamily: 'inherit' }}
-                    wrapLines={true}
-                    lineProps={{ style: { wordBreak: 'break-all', whiteSpace: 'pre-wrap' } }}
-                  >
-                    {typedCodeBody || '\u00A0'}
-                  </SyntaxHighlighter>
-              </div>
+    <BlobBackgroundLayout>
+      <div className={styles.container}>
+        <nav className={styles.navbar}>
+          <div className={styles.navContent}>
+            <div className={styles.logoContainer}>
+               <Link href="/" className={styles.logoLink}>
+                 LLMInterviewer
+               </Link>
             </div>
-        </div>
-      </main>
-    </div>
+            <div className={styles.navActions}>
+              <Link href="/login" className={styles.loginButton}>
+                Login
+              </Link>
+            </div>
+          </div>
+        </nav>
+
+        <main className={styles.mainContent}>
+          <div className={styles.mainText}>
+            <h1 className={styles.motto}>
+              A Better Way to Learn
+            </h1>
+            <p className={styles.subheadline}>
+              Learn and prepare for technical interviews.
+            </p>
+            <div className={styles.ctaContainer}>
+              <Link href="/login?mode=register" className={styles.ctaButton}>
+                Get Started
+              </Link>
+            </div>
+          </div>
+
+          <div className={styles.terminalContainer}>
+             <div className={styles.terminalFrame}>
+                <div className={styles.terminalHeader}>
+                  <div className={styles.terminalDots}>
+                    <span className={`${styles.dot} ${styles.red}`}></span>
+                    <span className={`${styles.dot} ${styles.yellow}`}></span>
+                    <span className={`${styles.dot} ${styles.green}`}></span>
+                  </div>
+                  <div className={styles.terminalTitle}>code</div>
+                </div>
+
+                <div className={styles.terminalBody}>
+                    <SyntaxHighlighter
+                      language="python"
+                      style={vscDarkPlus}
+                      customStyle={{ background: 'transparent', margin: 0, padding: 0, fontSize: 'inherit', fontFamily: 'inherit' }}
+                      wrapLines={true}
+                      lineProps={{ style: { wordBreak: 'break-all', whiteSpace: 'pre-wrap' } }}
+                    >
+                      {staticCodeHeader}
+                    </SyntaxHighlighter>
+
+                    <SyntaxHighlighter
+                      language="python"
+                      style={vscDarkPlus}
+                      customStyle={{ background: 'transparent', margin: 0, padding: 0, fontSize: 'inherit', fontFamily: 'inherit' }}
+                      wrapLines={true}
+                      lineProps={{ style: { wordBreak: 'break-all', whiteSpace: 'pre-wrap' } }}
+                    >
+                      {typedCodeBody || '\u00A0'}
+                    </SyntaxHighlighter>
+                </div>
+              </div>
+          </div>
+        </main>
+      </div>
+    </BlobBackgroundLayout>
   );
 }

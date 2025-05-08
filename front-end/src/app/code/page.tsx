@@ -1,149 +1,424 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import Select, { SingleValue } from 'react-select';
 import { Editor } from '@monaco-editor/react';
 import styles from './page.module.css';
 import '../../styles/globals.css';
+import { Interviewer } from './components/Interviewer';
+import dynamic from 'next/dynamic';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-python';
+import 'prismjs/themes/prism-okaidia.css';
+import AddQuestionForm from './components/AddQuestionForm';
 
-import { Interviewer } from '../../components/interviewer'
+type SelectProps = React.ComponentProps<typeof Select<QuestionOption>>;
+const DynamicSelect = dynamic<SelectProps>(() => import('react-select'), {
+  ssr: false,
+  loading: () => <div className={styles.selectLoadingPlaceholder}>Loading...</div>
+});
 
-import { Tab } from '../../types/tab';
-import { Question } from '../../types/question';
+interface TestCase {
+  input: any;
+  expected_output: any;
+}
+
+interface Solution {
+  code: string;
+  summary: string;
+  language?: string;
+  title?: string;
+}
+
+interface QuestionData {
+  _id: string;
+  id: number;
+  title:string;
+  description: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  examples: Record<string, any>[];
+  constraints?: string[];
+  starting_code: string;
+  solutions?: Solution[];
+  test_cases?: TestCase[];
+}
+
+interface QuestionOption {
+  value: string;
+  label: string;
+}
+
+type PanelTab = 'problem' | 'solutions';
+
+interface RunResult {
+    input: string;
+    expectedOutput: string;
+    actualOutput: string;
+    status: 'Passed' | 'Failed' | 'Error';
+    errorMessage?: string;
+    stdout?: string;
+    stderr?: string;
+}
+
+interface HighlightedCodeBlockProps {
+  code: string;
+  language: string;
+}
+
+const HighlightedCodeBlock: React.FC<HighlightedCodeBlockProps> = ({ code, language }) => {
+  const codeRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (codeRef.current) {
+      Prism.highlightElement(codeRef.current);
+    }
+  }, [code, language]);
+  return (
+    <pre className={`${styles.solutionCode} language-${language}`}>
+      <code ref={codeRef} className={`language-${language}`}>
+        {code}
+      </code>
+    </pre>
+  );
+};
 
 const CodeEditor: React.FC = () => {
-  const router = useRouter();
-
-  // menu tabs
-  const tabs: Tab[] = [
-    { id: 'problems', name: 'Problems', route: '/' },
-    { id: 'settings', name: 'Settings', route: '/settings' },
-    { id: 'tab3', name: 'tab3', route: '/tab3' },
-  ];
-
-  // questions
-  const questions: Question[] = [
-    {
-      id: 'q1',
-      title: 'Two Sum',
-      description: 'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\n\nYou can return the answer in any order.',
-      initialCode: 'class Solution:\n\tdef twoSum(self, nums: List[int], target: int) -> List[int]:\n\t\t',
-    },
-    {
-      id: 'q2',
-      title: 'Reverse String',
-      description: 'Write a function that reverses a string. The input string is given as an array of characters s.\n\nYou must do this by modifying the input array in-place with O(1) extra memory.',
-      initialCode: 'class Solution:\n\tdef reverseString(self, s: List[str]) -> None:\n\t\t"""\n\t\tDo not return anything, modify s in-place instead.\n\t\t"""',
-    },
-  ];
-
-  const [activeTab, setActiveTab] = useState<string>(tabs[0].id);
-  const [activeQuestion, setActiveQuestion] = useState<Question>(questions[0]);
-  const [code, setCode] = useState<string>(questions[0].initialCode);
-  const [panelWidth, setPanelWidth] = useState(300);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleEditorChange = (value: string | undefined) => {
-    if (value !== undefined) {
-      setCode(value);
-    }
-  };
-
-  const handleTabClick = (tab: Tab) => {
-    setActiveTab(tab.id);
-    router.push(tab.route);
-  };
-
-  const startDragging = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
+  const [questionOptions, setQuestionOptions] = useState<QuestionOption[]>([]);
+  const [selectedOption, setSelectedOption] = useState<QuestionOption | null>(null);
+  const [activeQuestion, setActiveQuestion] = useState<QuestionData | null>(null);
+  const [code, setCode] = useState<string>('// Select a question');
+  const [isLoadingList, setIsLoadingList] = useState<boolean>(true);
+  const [isLoadingQuestion, setIsLoadingQuestion] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [panelWidth, setPanelWidth] = useState(300); 
+  const [isDraggingPanelResizer, setIsDraggingPanelResizer] = useState(false);
+  const [questionDetailsFlexBasis, setQuestionDetailsFlexBasis] = useState('60%');
+  const [isDraggingHorizontalResizer, setIsDraggingHorizontalResizer] = useState(false);
+  const questionPanelRef = useRef<HTMLDivElement>(null);
+  const [activePanelTab, setActivePanelTab] = useState<PanelTab>('problem');
+  const [isSubmittingCode, setIsSubmittingCode] = useState<boolean>(false);
+  const [runResults, setRunResults] = useState<RunResult[] | null>(null);
+  const [runError, setRunError] = useState<string | null>(null);
+  const [showAddQuestionForm, setShowAddQuestionForm] = useState<boolean>(false);
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isDragging) {
-        const newWidth = Math.max(200, e.clientX);
-        setPanelWidth(newWidth);
+    setPanelWidth(window.innerWidth * 0.4);
+  }, []);
+
+  const fetchQuestionList = useCallback(async (selectNewest?: boolean) => {
+    setIsLoadingList(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/questions?list=true');
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const result = await response.json();
+      if (result.success && Array.isArray(result.data)) {
+        const options = result.data.map((q: { _id: string; title: string }) => ({ value: q._id, label: q.title }));
+        setQuestionOptions(options);
+        if (selectNewest && options.length > 0) {
+            const newOption = options.find(opt => !questionOptions.some(oldOpt => oldOpt.value === opt.value)) || options[options.length - 1];
+            if (newOption) setSelectedOption(newOption);
+        } else if (!selectedOption && options.length > 0) {
+          const defaultOption = options.find((opt) => opt.label === 'Two Sum');
+          if (defaultOption) setSelectedOption(defaultOption);
+          else setSelectedOption(options[0]);
+        } else if (options.length === 0) {
+          setError("No questions found.");
+          setSelectedOption(null);
+        } else if (selectedOption && !options.find(opt => opt.value === selectedOption.value)) {
+           setSelectedOption(options.length > 0 ? options[0] : null);
+        }
+      } else {
+        throw new Error(result.error || 'Failed to fetch question list');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+    } finally {
+      setIsLoadingList(false);
+    }
+  }, [selectedOption, questionOptions]);
+
+  useEffect(() => {
+    fetchQuestionList();
+  }, []); 
+
+  useEffect(() => {
+    if (!selectedOption) {
+      setActiveQuestion(null);
+      setCode('// Select a question from the dropdown');
+      setRunResults(null); setRunError(null);
+      return;
+    }
+    const fetchQuestionDetails = async () => {
+      setIsLoadingQuestion(true);
+      setError(null); setActiveQuestion(null);
+      setRunResults(null); setRunError(null);
+      setCode('// Loading question...');
+      try {
+        const response = await fetch(`/api/questions?id=${selectedOption.value}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const result = await response.json();
+        if (result.success) {
+          const questionData = result.data as QuestionData;
+          setActiveQuestion(questionData);
+          setCode(questionData.starting_code || '// No starting code provided.');
+          setActivePanelTab('problem');
+        } else {
+          throw new Error(result.error || `Failed to fetch question: ${selectedOption.label}`);
+        }
+      } catch (err) {
+        setActiveQuestion(null);
+        setCode('// Error loading question');
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      } finally {
+        setIsLoadingQuestion(false);
       }
     };
+    fetchQuestionDetails();
+  }, [selectedOption]);
 
-    const handleMouseUp = () => {
-      setIsDragging(false);
+  useEffect(() => {
+    if (activePanelTab === 'solutions' && activeQuestion?.solutions) {
+      Prism.highlightAll();
+    }
+  }, [activePanelTab, activeQuestion?.solutions]);
+
+  const handleEditorChange = (value: string | undefined) => {
+    setCode(value ?? '');
+    setRunResults(null); setRunError(null);
+  };
+
+  const handleQuestionSelect = (selected: SingleValue<QuestionOption>) => {
+    setSelectedOption(selected);
+    setRunResults(null); setRunError(null);
+    setIsSubmittingCode(false);
+  };
+
+  const startDraggingPanelResizer = (e: React.MouseEvent) => {
+    e.preventDefault(); setIsDraggingPanelResizer(true);
+  };
+  const startDraggingHorizontalResizer = (e: React.MouseEvent) => {
+    e.preventDefault(); setIsDraggingHorizontalResizer(true);
+  };
+
+  const handleRunCode = useCallback(async () => {
+    if (!activeQuestion || !code || isSubmittingCode) return;
+    setIsSubmittingCode(true);
+    setRunResults(null); setRunError(null);
+    try {
+      const response = await fetch('/api/runCode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code, questionId: activeQuestion._id }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || `Execution failed: ${response.status}`);
+      if (result.success && Array.isArray(result.results)) {
+        setRunResults(result.results as RunResult[]);
+      } else if (result.error) {
+        setRunError(result.error); setRunResults([]);
+      } else {
+        throw new Error('Invalid response from execution server.');
+      }
+    } catch (err) {
+      setRunError(err instanceof Error ? err.message : 'Execution error.');
+      setRunResults(null);
+    } finally {
+      setIsSubmittingCode(false);
+    }
+  }, [activeQuestion, code, isSubmittingCode]);
+
+   useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDraggingPanelResizer) {
+        const newWidth = Math.max(200, e.clientX); 
+        const maxWidth = window.innerWidth * 0.7; 
+        setPanelWidth(Math.min(newWidth, maxWidth));
+      }
     };
-
-    if (isDragging) {
+    const handleMouseUp = () => setIsDraggingPanelResizer(false);
+    if (isDraggingPanelResizer) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     }
-
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging]);
+  }, [isDraggingPanelResizer]);
+
+  useEffect(() => {
+    const handleHorizontalMouseMove = (e: MouseEvent) => {
+      if (!isDraggingHorizontalResizer || !questionPanelRef.current) return;
+      const panelRect = questionPanelRef.current.getBoundingClientRect();
+      const newHeight = e.clientY - panelRect.top;
+      const totalHeight = panelRect.height;
+      const minPixelHeight = 100; 
+      const maxPixelHeight = totalHeight - 100;
+      const clampedHeight = Math.max(minPixelHeight, Math.min(newHeight, maxPixelHeight));
+      setQuestionDetailsFlexBasis(`${clampedHeight}px`);
+    };
+    const handleHorizontalMouseUp = () => setIsDraggingHorizontalResizer(false);
+    if (isDraggingHorizontalResizer) {
+      document.addEventListener('mousemove', handleHorizontalMouseMove);
+      document.addEventListener('mouseup', handleHorizontalMouseUp);
+    }
+    return () => {
+      document.removeEventListener('mousemove', handleHorizontalMouseMove);
+      document.removeEventListener('mouseup', handleHorizontalMouseUp);
+    };
+  }, [isDraggingHorizontalResizer]);
+
+  const formatConstraint = (constraint: string) => {
+    const formatted = constraint.replace(/(-?\d+)\^(\d+)/g, '$1<sup>$2</sup>');
+    return <span dangerouslySetInnerHTML={{ __html: formatted }} />;
+  };
+
+  const panelContent = useMemo(() => {
+    if (isLoadingQuestion) return <p>Loading question details...</p>;
+    if (error && !activeQuestion) return <p className={styles.errorText}>Error: {error}</p>;
+    if (!activeQuestion) return <p>Select a question.</p>;
+    switch (activePanelTab) {
+      case 'problem':
+        return (
+           <div className={styles.contentSection}>
+              <p className={styles.difficultyText}><strong>Difficulty:</strong> {activeQuestion.difficulty}</p>
+              <div className={styles.descriptionText} dangerouslySetInnerHTML={{ __html: activeQuestion.description.replace(/`/g, '') || '' }} />
+             {activeQuestion.examples && activeQuestion.examples.length > 0 && (
+               <div>
+                 {activeQuestion.examples.map((ex, index) => (
+                   <div key={index} className={styles.exampleBlock}>
+                      <div className={styles.exampleTitle}>Example {index + 1}:</div>
+                      <pre className={styles.examplePre}>
+                        <strong>Input:</strong> {typeof ex.input === 'object' ? JSON.stringify(ex.input) : ex.input}{'\n'}
+                        <strong>Output:</strong> {typeof ex.output === 'object' ? JSON.stringify(ex.output) : ex.output}
+                      </pre>
+                      {ex.explanation && <p className={styles.exampleExplanation}><strong>Explanation:</strong> {ex.explanation}</p>}
+                   </div>
+                 ))}
+               </div>
+             )}
+             {activeQuestion.constraints && activeQuestion.constraints.length > 0 && (
+                <div className={styles.constraintsSection}>
+                    <h4 className={styles.constraintsHeading}>Constraints:</h4>
+                    <ul className={styles.constraintsList}>
+                        {activeQuestion.constraints.map((c, i) => <li key={i}>{formatConstraint(c)}</li>)}
+                    </ul>
+                </div>
+             )}
+           </div>
+        );
+      case 'solutions':
+         return (
+            <div className={styles.contentSection}>
+              <h3 className={styles.solutionsMainTitle}>Solutions</h3>
+              {activeQuestion.solutions && activeQuestion.solutions.length > 0 ? (
+                activeQuestion.solutions.map((solution, index) => (
+                  <div key={index} className={styles.solutionBlock}>
+                    {solution.title && <h4 className={styles.solutionTitle}>{solution.title}</h4>}
+                    <p className={styles.solutionSummary}>{solution.summary}</p>
+                    <HighlightedCodeBlock code={solution.code} language={solution.language || 'python'}/>
+                    {index < activeQuestion.solutions!.length - 1 && <hr className={styles.solutionSeparator} />}
+                  </div>
+                ))
+              ) : ( <p>No official solutions available yet.</p> )}
+            </div>
+          );
+      default: return null;
+    }
+  }, [activeQuestion, activePanelTab, isLoadingQuestion, error]);
+
+  const renderResultsPanel = () => {
+    if (isSubmittingCode) return <div className={styles.resultsPanel}>Running tests...</div>;
+    if (runError) return <div className={`${styles.resultsPanel} ${styles.errorResult}`}>Error: {runError}</div>;
+    if (!runResults) return null;
+    if (runResults.length === 0 && !runError) return <div className={styles.resultsPanel}>No test results.</div>;
+    const allPassed = runResults.every(r => r.status === 'Passed');
+    const formatDisplayValue = (val: string | null | undefined): string => {
+      if (val === null || val === undefined) return 'N/A';
+      try { return JSON.stringify(JSON.parse(val)); } catch (e) { return val; }
+    };
+    return (
+      <div className={styles.resultsPanel}>
+        <h3>Test Results: {allPassed ? <span className={styles.passResult}>All Passed ✅</span> : <span className={styles.failResult}>Some Failed ❌</span>}</h3>
+        {runResults.map((result, index) => {
+          const displayInput = formatDisplayValue(result.input);
+          const displayExpected = formatDisplayValue(result.expectedOutput);
+          const displayActual = result.status === 'Error' ? result.actualOutput : formatDisplayValue(result.actualOutput);
+          return (
+            <div key={index} className={styles.resultCase}>
+              <strong className={result.status === 'Passed' ? styles.passResult : styles.failResult}>Test Case {index + 1}: {result.status}</strong>
+              <div className={styles.resultDetailsContainer}>
+                <div className={styles.resultDetailItem}><span className={styles.resultLabel}>Input:</span><code className={styles.resultValue}>{displayInput}</code></div>
+                <div className={styles.resultDetailItem}><span className={styles.resultLabel}>Expected:</span><code className={styles.resultValue}>{displayExpected}</code></div>
+                {result.status !== 'Error' && (<div className={styles.resultDetailItem}><span className={styles.resultLabel}>Actual:</span><code className={styles.resultValue}>{displayActual}</code></div>)}
+                {result.status === 'Error' && (<div className={styles.resultDetailItem}><span className={styles.resultLabel}>Error:</span><pre className={styles.resultErrorValue}>{result.errorMessage || displayActual || 'Unknown error'}</pre></div>)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const handleQuestionAdded = () => {
+    fetchQuestionList(true);
+  };
 
   return (
-    <div className={styles.container}>      
-      {/* menu tabs */}
-      <div className={styles.menuTabs}>
-        {tabs.map(tab => (
-          <div
-            key={tab.id}
-            className={`${styles.menuTab} ${activeTab === tab.id ? styles.activeTab : ''}`}
-            onClick={() => handleTabClick(tab)}
-          >
-            <div className={styles.tabName}>{tab.name}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* question panel */}
-      <div className={styles.questionPanel} style={{ width: `${panelWidth}px` }}>
-        <h2>Problems</h2>
-        {questions.map(question => (
-          <div
-            key={question.id}
-            className={`${styles.questionItem} ${activeQuestion.id === question.id ? styles.activeQuestion : ''}`}
-            onClick={() => {
-              setActiveQuestion(question);
-              setCode(question.initialCode);
-            }}
-          >
-            <div>{question.title}</div>
-          </div>
-        ))}
-        
-        <div className={styles.questionDetails}>
-          <h3>{activeQuestion.title}</h3>
-          <p>{activeQuestion.description}</p>
-        </div>
-
-        <main className="flex min-h-screen flex-col items-center justify-between p-24">
-          <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
-            <Interviewer
-              problem={activeQuestion.description}
-              currentCode={code}
-            />
-          </div>
-        </main>
-        
-      </div>
-
-      {/* resizer */}
-      <div 
-        className={styles.resizer}
-        onMouseDown={startDragging}
-      />
-
-      {/* code editor */}
-      <div className={styles.editorContainer}>
-        <Editor
-          height="100%"
-          language="python"
-          theme="vs-dark"
-          value={code}
-          onChange={handleEditorChange}
+    <div className={styles.container}>
+      {showAddQuestionForm && (
+        <AddQuestionForm
+          onQuestionAdded={handleQuestionAdded}
+          onClose={() => setShowAddQuestionForm(false)}
         />
+      )}
+      <div ref={questionPanelRef} className={styles.questionPanel} style={{ width: `${panelWidth}px` }}>
+        <div className={styles.questionSelectionHeader}>
+            <DynamicSelect
+            options={questionOptions}
+            value={selectedOption}
+            onChange={handleQuestionSelect}
+            isLoading={isLoadingList}
+            placeholder={isLoadingList ? 'Loading...' : 'Select a question...'}
+            isClearable={false}
+            isSearchable
+            className={styles.questionDropdown}
+            classNamePrefix="select"
+            instanceId={useMemo(() => `select-instance-${Math.random()}`, [])}
+            />
+            <button onClick={() => setShowAddQuestionForm(true)} className={styles.addQuestionButton} title="Add New Question">
+            +
+            </button>
+        </div>
+        {activeQuestion && !isLoadingQuestion && (<h2 className={styles.selectedQuestionTitle}>{activeQuestion.title}</h2>)}
+        {activeQuestion && !isLoadingQuestion && (
+            <div className={styles.panelTabs}>
+              <div className={`${styles.panelTab} ${activePanelTab === 'problem' ? styles.activePanelTab : ''}`} onClick={() => setActivePanelTab('problem')}>Problem</div>
+              {activeQuestion.solutions && activeQuestion.solutions.length > 0 && (<div className={`${styles.panelTab} ${activePanelTab === 'solutions' ? styles.activePanelTab : ''}`} onClick={() => setActivePanelTab('solutions')}>Solutions</div>)}
+            </div>
+        )}
+        <div className={styles.questionDetails} style={{ flexBasis: questionDetailsFlexBasis, minHeight: 0 }}>{panelContent}</div>
+        <div className={styles.horizontalResizer} onMouseDown={startDraggingHorizontalResizer} />
+        {activeQuestion && !isLoadingQuestion && (
+          <main className={styles.interviewerSection} style={{ flexGrow: 1, minHeight: 0 }}>
+            <Interviewer problem={activeQuestion.description ?? 'No description.'} currentCode={code}/>
+          </main>
+        )}
+      </div>
+      <div className={styles.resizer} onMouseDown={startDraggingPanelResizer} />
+      <div className={styles.editorPanel}>
+        <div className={styles.editorControls}>
+            <button onClick={handleRunCode} disabled={!activeQuestion || isSubmittingCode || isLoadingQuestion} className={styles.runButton}>
+                {isSubmittingCode ? 'Running...' : 'Run Code'}
+            </button>
+        </div>
+        <div className={styles.editorContainer}>
+            <Editor
+            height="100%" language="python" theme="vs" value={code} onChange={handleEditorChange}
+            key={activeQuestion?._id || 'editor-placeholder'}
+            options={{ readOnly: !activeQuestion || isSubmittingCode, minimap: { enabled: true }, fontSize: 14 }}/>
+        </div>
+        <div className={styles.resultsContainer}>{renderResultsPanel()}</div>
       </div>
     </div>
   );
